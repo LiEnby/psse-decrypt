@@ -7,3 +7,5 @@ Usage: ``decrypt.py <psm game folder>``
 
 After 9 years, the encryption used by PlayStation Mobile games is finally cracked!!
 
+Requires:
+  pycryptodome
