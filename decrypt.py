@@ -129,7 +129,7 @@ def DecryptFile(input_filename):
     global total_blocks
     global psm_dev
 
-    iv = b"\x00\x01\x02\x03\04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F" # Header IV, used to find the real IV
+    iv = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F" # Header IV, used to find the real IV
     key = b"\x4E\x29\x8B\x40\xF5\x31\xF4\x69\xD2\x1F\x75\xB1\x33\xC3\x07\xBE" # Header key for PSM Runtime and used in all retail games.
     psm_dev_key = b"\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF" # Header key for PSM Dev, used for all files encrypted with psm_encryptor.dll
     runtime_game_key = b"\xA8\x69\x3C\x4D\xF0\xAE\xED\xBC\x9A\xBF\xD8\x21\x36\x92\x91\x2D" # key for Sce.PlayStation.Core.dll
@@ -168,6 +168,7 @@ def DecryptFile(input_filename):
         psm_dev = True
     elif content_id != read_content_id:
         print("Content ID Mismatch! Expected: "+content_id.decode("UTF-8")+" but got"+read_content_id.decode("UTF-8"))
+        exit()
     if game_key == b"":
         print("Unknown game key! if its debug PSSE, please provide publisher key (p12) and app seed (krng/hkapp) as seperate arguments")
         exit()
