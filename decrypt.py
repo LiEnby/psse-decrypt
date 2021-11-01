@@ -192,23 +192,24 @@ def DecryptFile(input_filename):
     cipher = AES.new(key, AES.MODE_CBC, iv)
     original_iv = cipher.decrypt(enc)
     
-    md5 = hashlib.md5()
     total_file_data = b""
     
     for i in range(0, total_blocks):
         file_block = GetBlock(fd, i)
-        md5.update(file_block)
         total_file_data += file_block
 
     fd.close()
     
     total_file_data = total_file_data[:file_size] # trim to file_size
     
+    md5 = hashlib.md5()
+    md5.update(total_file_data)
     got_md5 = md5.digest()
+    
     if file_md5 != got_md5: # Verify decrypted file.
         print("MD5 Mismatch, Expected: "+binascii.hexlify(file_md5).decode("UTF-8")+" got: "+binascii.hexlify(got_md5).decode("UTF-8"))
-        exit()
-    
+        exit();
+        
     return total_file_data
     
 
