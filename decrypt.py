@@ -254,7 +254,7 @@ if psm_dev: # I guess for android this would also be true.
     ro_path = b"/Application/"
 
 if not psm_dev: # When using PSM Dev, there are no licenses, instead keys are stored in krng or khapp file...
-    license_file = os.path.normpath(file+"/RO/License/FAKE.RIF")
+    license_file = os.path.normpath(file+"/RO/License/FAKE.rif")
     if not os.path.exists(license_file):
         print("Cannot find license "+license_file)
         exit()
