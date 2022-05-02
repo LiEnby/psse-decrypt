@@ -280,7 +280,7 @@ if os.path.isfile(fpath):
     open(fpath, "wb").write(data)
     exit()
 
-# If file key is still unknown after all of this, abandon all hope!
+# If game key is still unknown after all of this, abandon all hope!
 if game_key == b"":
     print("[*] Game key is unknown, i cant decrypt this ! :(")
     exit()
