@@ -9,3 +9,4 @@ After 9 years, the encryption used by PlayStation Mobile games is finally cracke
 
 Requires:
   pycryptodome
+  cryptography
