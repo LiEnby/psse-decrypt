@@ -14,7 +14,6 @@ game_key = b""
 content_id = b""
 original_iv = b""
 
-psm_dev = False
 file_size = 0
 total_blocks = 0
 
@@ -32,23 +31,25 @@ def ReadGameKey(filename): # Read from FAKE.RIF
 
 def ReadPublisherKey(p12, khapp): # used for PSM Developer Assistant (debug PSSE)
     global game_key
-    
     print("[*] Reading PRIVATE KEY from "+p12)
     pkcs12_file = open(p12, 'rb').read() 
     passphrase = b"password" 
     private_key, certificate, additional_certificates = pkcs12.load_key_and_certificates(pkcs12_file, passphrase) # Parse PKCS12 file
     
-    print("[*] Reading HKAPP/HKRNG "+khapp)
+    print("[*] Reading HKAPP "+khapp)
     hkfd = open(khapp, "rb")
     offset_by = 0
     
-    magic = hkfd.read(0x4) # is this an appkey or a keyring?
-    if magic == b"PAKR":
-        offset_by = 0x48 # Probably bad parsing, but whatever
-    elif magic == b"PSHK":
+    magic = hkfd.read(0x4) 
+    if magic == b"PAKR": # Keyring
+        offset_by = 0x48 
+    elif magic == b"tkdb": # Protected_kconsole.dat- needs more research
+        offset_by = 0x10
+    elif magic == b"PSHK": # Raw HKAPP
         offset_by = 0
     else:
-        print("[*] Invalid khapp!")
+        print("[*] Invalid khapp, magic: "+magic.decode("UTF-8"))
+        exit()
     
     
     hkfd.seek(0x200+offset_by, 0)
@@ -64,15 +65,13 @@ def ReadPublisherKey(p12, khapp): # used for PSM Developer Assistant (debug PSSE
     dec = cipher.decrypt(ebuffer) # AES Decrypt
     
     # Dont know what these are for.
-    something1 = dec[0x00:0x10]
-    something2 = dec[0xA0:0xB0]
+    something1 = dec[0x00:0x10] 
+    something2 = dec[0xA0:0xB0] 
     
     game_key = dec[0x60:0x70]
     
     hkfd.close()
-    
-    print("[*] Game Key read from Publisher License Files: "+binascii.hexlify(game_key).decode("UTF-8"))
-    
+        
 def IvRoll(location):
     iv_next = location
     iv = bytearray(original_iv)
@@ -127,7 +126,8 @@ def DecryptFile(input_filename):
     global original_iv
     global file_size
     global total_blocks
-    global psm_dev
+    
+    psm_dev = False
 
     iv = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F" # Header IV, used to find the real IV
     key = b"\x4E\x29\x8B\x40\xF5\x31\xF4\x69\xD2\x1F\x75\xB1\x33\xC3\x07\xBE" # Header key for PSM Runtime and used in all retail games.
@@ -141,14 +141,15 @@ def DecryptFile(input_filename):
     # Check magic is "PSSE" or "PSME"
     header = fd.read(4)
     if header != b"PSSE" and header != b"PSME":
-        print("Not a valid PSSE File")
+        print("[*] "+input_filename.decode("UTF-8")+" is not a valid PSSE File")
+        print("[*] Is it already decrypted?")
         exit()
     
     # Check PSSE Version is 0x1 (not sure what it would be otherwise)
     fd.seek(0x4, 0)
     version = struct.unpack('i', fd.read(4))[0]
     if version != 0x01:
-        print("[*] Unsupported version: "+str(version))
+        print("[*] Unsupported PSSE version: "+str(version))
         exit()
     
     fd.seek(0x8, 0)
@@ -168,9 +169,6 @@ def DecryptFile(input_filename):
         psm_dev = True
     elif content_id != read_content_id:
         print("[*] Content ID Mismatch! Expected: "+content_id.decode("UTF-8")+" but got"+read_content_id.decode("UTF-8"))
-        exit()
-    if game_key == b"":
-        print("[*] Unknown game key! if its debug PSSE, please provide publisher key (p12) and app seed (krng/hkapp) as seperate arguments")
         exit()
     
     fd.seek(0x40, 0)
@@ -208,28 +206,53 @@ def DecryptFile(input_filename):
     
     if file_md5 != got_md5: # Verify decrypted file.
         print("[*] MD5 Mismatch, Expected: "+binascii.hexlify(file_md5).decode("UTF-8")+" got: "+binascii.hexlify(got_md5).decode("UTF-8"))
-        print("[*] The app key is most likely wrong.")
+        print("[*] The game key is most likely wrong.")
         exit();
         
     return total_file_data
     
-if __name__ == '__main__':
-    if len(sys.argv) <= 1:
-        print("PSSE Decryptor by SilicaAndPina v2")
-        print("(for retail games)     <PSM_GAME_FOLDER>")
-        print("(for PSM Dev Packages) <PSM_GAME_FOLDER> <PSM_PUBLISHER_KEY> <PSM_HKAPP_OR_KRNG>")
-        print("")
-        print("For retail games, you require the RO/License/FAKE.RIF file")
-        print("And for PSM Dev Packages, you need there original publisher key and keyring.")
-        print("")
-        print("This program expects the game files to be located in PSM_GAME_FOLDER/RO/Application")
-        print("(just PSM_GAME_FOLDER/Application for PSM Developer Packages)")
-        exit()
-        
-    file = sys.argv[1]
 
-    if len(sys.argv) >= 4:
-        psm_dev = True
+if len(sys.argv) <= 1:
+    print("PSSE Decryptor by SilicaAndPina v3")
+    print("(for retail games)     <PSM_GAME_FOLDER>")
+    print("(for PSM Dev Packages) <PSM_GAME_FOLDER> <PSM_PUBLISHER_KEY> <PSM_HKAPP_OR_KRNG>")
+    print("(for anything)         <PSM_GAME_FOLDER> <PSM_GAME_KEY>")
+    print("")
+    print("For retail games, you require the RO/License/FAKE.RIF file")
+    print("And for PSM Dev Packages, you need there original publisher key and keyring.")
+    exit()
+    
+file = sys.argv[1]
+fpath = file.encode("UTF-8")
+
+# Some dumb dirbustnig shit.
+applications_folder = b"/RO/Application/"
+license_file = os.path.normpath(fpath+b"/RO/License/FAKE.rif")
+psse_list = os.path.normpath(fpath+applications_folder+b"psse.list")
+
+if not os.path.exists(psse_list):
+    applications_folder = b"/Application/"
+    license_file = os.path.normpath(fpath+b"/License/FAKE.rif")
+    psse_list = os.path.normpath(fpath+applications_folder+b"psse.list")
+    
+    if not os.path.exists(psse_list):
+        applications_folder = b"/"
+        license_file = os.path.normpath(fpath+b"/../License/FAKE.rif")
+        psse_list = os.path.normpath(fpath+applications_folder+b"psse.list")    
+    
+        if not os.path.exists(psse_list):
+            print("[*] Cannot find psse.list.")
+            exit()
+
+
+# Direct specify direct game key
+if len(sys.argv) == 3:
+    game_key = sys.argv[2]
+
+
+# Read from publisher license
+if game_key == b"":
+    if len(sys.argv) == 4:
         pkcs12name = sys.argv[2]
         khappname = sys.argv[3]
         print("[*] Reading Publisher Key and App Key")
@@ -244,46 +267,42 @@ if __name__ == '__main__':
             
         ReadPublisherKey(pkcs12name, khappname)
 
-    if os.path.isfile(file):
-        print("[*] Decrypting: "+file)
-        data = DecryptFile(file)
-        open(file, "wb").write(data)
-        exit()
 
-    ro_path = b"/RO/Application/"
-    if psm_dev: # I guess for android this would also be true.
-        ro_path = b"/Application/"
-
-    if not psm_dev: # When using PSM Dev, there are no licenses, instead keys are stored in krng or khapp file...
-        license_file = os.path.normpath(file+"/RO/License/FAKE.rif")
-        if not os.path.exists(license_file):
-            print("[*] Cannot find license "+license_file)
-            exit()
-        
+# Read from fake.rif
+if game_key == b"":
+    if os.path.exists(license_file):   
         ReadGameKey(license_file)
-        print("[*] Reading Game key from FAKE.RIF: "+binascii.hexlify(game_key).decode("UTF-8"))
 
-    psse_list = os.path.normpath(file.encode("UTF-8")+ro_path+b"psse.list")
-        
-    if not os.path.exists(psse_list):
-        print("[*] Cannot find "+psse_list.decode("UTF-8"))
-        exit()
+ # Is this a particular file rather than a games folder?
+if os.path.isfile(fpath):
+    print("Decrypting: "+file)
+    data = DecryptFile(file)
+    open(fpath, "wb").write(data)
+    exit()
 
-    file_data = DecryptFile(psse_list)
-    file_list = file_data.replace(b"\r", b"").split(b"\n")
+# If file key is still unknown after all of this, abandon all hope!
+if game_key == b"":
+    print("[*] Game key is unknown, i cant decrypt this ! :(")
+    exit()
+    
+print("[*] psse.list: "+psse_list.decode("UTF-8")) 
+print("[*] Using game key: "+binascii.hexlify(game_key).decode("UTF-8"))
 
-    for psse_file in file_list:
-        if psse_file == b"":
-            continue
-        path = file.encode("UTF-8")
-        file_path = os.path.normpath(path+ro_path+psse_file)
-        print((b"[*] Decrypting: "+file_path).decode("UTF-8"))
-        if os.path.exists(file_path):
-            decrypted_data = DecryptFile(file_path)
-            open(file_path, "wb").write(decrypted_data)
-        else:
-            print("[*] Error: File not Found")
-        
 
-    open(psse_list, "wb").write(file_data)
-    print("[*] Done")
+file_data = DecryptFile(psse_list)
+file_list = file_data.replace(b"\r", b"").split(b"\n")
+
+for psse_file in file_list:
+    if psse_file == b"":
+        continue
+    file_path = os.path.normpath(fpath+applications_folder+psse_file)
+    print("[*] Decrypting: "+file_path.decode("UTF-8"))
+    if os.path.exists(file_path):
+        decrypted_data = DecryptFile(file_path)
+        open(file_path, "wb").write(decrypted_data)
+    else:
+        print("[*] Error: File not Found: "+file_path.decode("UTF-8"))
+    
+
+open(psse_list, "wb").write(file_data)
+print("[*] Decryption Complete!")
