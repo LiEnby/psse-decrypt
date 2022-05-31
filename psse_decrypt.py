@@ -225,7 +225,7 @@ if len(sys.argv) <= 1:
 file = sys.argv[1]
 fpath = file.encode("UTF-8")
 
-# Some dumb dirbustnig shit.
+# Some dumb dirbusting shit.
 applications_folder = b"/RO/Application/"
 license_file = os.path.normpath(fpath+b"/RO/License/FAKE.rif")
 psse_list = os.path.normpath(fpath+applications_folder+b"psse.list")
