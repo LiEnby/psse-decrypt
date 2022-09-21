@@ -168,7 +168,7 @@ def DecryptFile(input_filename):
     elif read_content_id == (b"\x00"*0x24): # PSM developer assistant doenst include a Content ID
         psm_dev = True
     elif content_id != read_content_id:
-        print("[*] Content ID Mismatch! Expected: "+content_id.decode("UTF-8")+" but got"+read_content_id.decode("UTF-8"))
+        print("[*] Content ID Mismatch! Expected: "+content_id.decode("UTF-8")+" but got "+read_content_id.decode("UTF-8"))
         exit()
     
     fd.seek(0x40, 0)
@@ -247,8 +247,11 @@ if not os.path.exists(psse_list):
 
 # Direct specify direct game key
 if len(sys.argv) == 3:
-    game_key = sys.argv[2]
-
+    game_key = binascii.unhexlify(sys.argv[2])
+    f = open(psse_list, "rb")
+    f.seek(0x14, os.SEEK_SET)
+    content_id = f.read(0x24)
+    f.close()
 
 # Read from publisher license
 if game_key == b"":
