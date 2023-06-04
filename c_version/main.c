@@ -12,7 +12,7 @@
 #endif
 #else
 #ifndef PATH_MAX
-#define PATH_MAX (0x7FFF)
+#define PATH_MAX (32777)
 #endif	
 #endif
 
@@ -380,7 +380,7 @@ int main(int argc, char** argv)
 
 	if(argc <= 1){
 		printf("PSSE Decryptor.\n");
-		printf("Usage: <PSM_FOLDER>\n",argv[0]);
+		printf("Usage: %s <PSM_FOLDER>\n",argv[0]);
 		return 0;
 	}
 
