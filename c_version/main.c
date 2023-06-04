@@ -380,6 +380,7 @@ int main(int argc, char** argv)
 
 	if(argc <= 1){
 		printf("PSSE Decryptor.\n");
+		printf("Created by Li / SilicaAndPina ..\n");
 		printf("Usage: %s <PSM_FOLDER>\n",argv[0]);
 		return 0;
 	}
@@ -390,9 +391,9 @@ int main(int argc, char** argv)
 	char psse_list[PATH_MAX];
 	char rif_file[PATH_MAX];
 	
-	snprintf(application_folder, PATH_MAX-1, "%s\\RO\\Application", psm_folder);	
-	snprintf(psse_list, PATH_MAX-1, "%s\\psse.list", application_folder);
-	snprintf(rif_file, PATH_MAX-1, "%s\\RO\\License\\FAKE.rif", psm_folder);
+	snprintf(application_folder, (PATH_MAX-1), "%s\\RO\\Application", psm_folder);	
+	snprintf(psse_list, (PATH_MAX-1), "%s\\psse.list", application_folder);
+	snprintf(rif_file, (PATH_MAX-1), "%s\\RO\\License\\FAKE.rif", psm_folder);
 	
 	fix_paths(application_folder);
 	fix_paths(psse_list);
