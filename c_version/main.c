@@ -12,7 +12,7 @@
 #endif
 #else
 #ifndef PATH_MAX
-#define PATH_MAX (32777)
+#define PATH_MAX (0x7FFF)
 #endif	
 #endif
 
@@ -390,9 +390,9 @@ int main(int argc, char** argv)
 	char psse_list[PATH_MAX];
 	char rif_file[PATH_MAX];
 	
-	snprintf(application_folder, sizeof(application_folder), "%s\\RO\\Application", psm_folder);	
-	snprintf(psse_list, sizeof(psse_list), "%s\\psse.list", application_folder);
-	snprintf(rif_file, sizeof(rif_file), "%s\\RO\\License\\FAKE.rif", psm_folder);
+	snprintf(application_folder, PATH_MAX-1, "%s\\RO\\Application", psm_folder);	
+	snprintf(psse_list, PATH_MAX-1, "%s\\psse.list", application_folder);
+	snprintf(rif_file, PATH_MAX-1, "%s\\RO\\License\\FAKE.rif", psm_folder);
 	
 	fix_paths(application_folder);
 	fix_paths(psse_list);
@@ -403,7 +403,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 	#ifdef DEBUG
-		print_buffer("Title Key", title_key, sizeof(title_key));
+		print_buffer("[*] Title Key", title_key, sizeof(title_key));
 	#endif
 	
 	
