@@ -6,6 +6,17 @@
 #include "aes.h"
 #include "md5.c"
 
+#ifdef MAX_PATH
+#ifndef PATH_MAX
+#define PATH_MAX MAX_PATH
+#endif
+#else
+#ifndef PATH_MAX
+#define PATH_MAX (0x7FFF)
+#endif	
+#endif
+
+
 #define DEBUG 1
 
 #define PSSE_BLOCK_SIZE (0x8000)
